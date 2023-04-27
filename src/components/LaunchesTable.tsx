@@ -165,12 +165,13 @@ const LaunchesTable = ({ query }: queryProp) => {
       selectedRockets.includes(launch.rocket.rocket_name)
     );
   }
-  if (selectedOutcomes.length > 0) {
+
+  if(selectedOutcomes.length > 0) {
     filteredData = filteredData?.filter((launch) =>
       selectedOutcomes.includes(launch.launch_success === null ? "NA": launch.launch_success === true? "Yes":"No")
     );
   }
-  else{
+  else if(selectedRockets.length==0 && selectedOutcomes.length==0){
     filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
   }
 
