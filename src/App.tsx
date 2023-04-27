@@ -1,24 +1,41 @@
-import React from 'react';
-import logo from './logo.svg';
+import 'antd/dist/reset.css';
 import './App.css';
+import { BrowserRouter as Router } from 'react-router-dom'
+import { ConfigProvider, Layout, theme} from 'antd';
+import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
+import Launches from './components/Launches';
+import NavBar from './components/NavBar';
 
 function App() {
+
+  const client = new ApolloClient({
+    uri: 'https://spacex-production.up.railway.app/',
+    cache: new InMemoryCache(),
+  })
+
+  const { Content } = Layout
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='App'>
+      <Router>
+        <ApolloProvider client={client}>
+          <ConfigProvider
+            theme={{
+              algorithm: theme.darkAlgorithm
+            }}
+          >
+            <Layout>
+              <NavBar />
+              <div className='heading-container'>
+                <h1 className='heading'>SpaceX launches</h1>
+              </div>
+              <Content className='container'>
+                <Launches />
+              </Content>
+            </Layout>
+          </ConfigProvider>
+        </ApolloProvider>
+      </Router>
     </div>
   );
 }

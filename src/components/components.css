@@ -1,0 +1,17 @@
+.navbar{
+    height: 60px;
+    background: #333333;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.navbar img{
+    max-width: 150px;
+}
+
+.ant-tabs-content-holder{
+    min-width: 80%;
+}
+
