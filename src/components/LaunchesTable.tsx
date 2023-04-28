@@ -7,7 +7,6 @@ import LaunchDetails from './LaunchDetails';
 import { Launch, LaunchesData, LaunchesVars, queryProp } from '../utils/types';
 import { GET_LAUNCHES, GET_UPCOMING_LAUNCHES } from '../utils/queries';
 import { SortOrder } from 'antd/lib/table/interface';
-import { type } from 'os';
 
 
 const LaunchesTable = ({ query }: queryProp) => {
@@ -138,7 +137,7 @@ const LaunchesTable = ({ query }: queryProp) => {
   const uniqueOutcomes = new Set<null | boolean | string>();
   if (Array.isArray(outcomes)) {
     outcomes.forEach((outcome) => {
-      uniqueOutcomes.add(outcome === null? "NA":outcome==true ? "Yes":"No");
+      uniqueOutcomes.add(outcome === null? "NA":outcome===true ? "Yes":"No");
       // if (typeof outcome === "boolean") {
       //   uniqueOutcomes.add(outcome);
       // }
@@ -171,7 +170,7 @@ const LaunchesTable = ({ query }: queryProp) => {
       selectedOutcomes.includes(launch.launch_success === null ? "NA": launch.launch_success === true? "Yes":"No")
     );
   }
-  else if(selectedRockets.length==0 && selectedOutcomes.length==0){
+  else if(selectedRockets.length===0 && selectedOutcomes.length===0){
     filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
   }
 
@@ -199,7 +198,11 @@ const LaunchesTable = ({ query }: queryProp) => {
           ))}
         </Select>
         </Space>
-        <Table pagination={{ pageSize: 20 }} dataSource={dataSource} columns={columns} />
+        <Table 
+        pagination={{ pageSize: 20 }} 
+        dataSource={dataSource} 
+        columns={columns}
+        />
         </Space>
       </div>
 

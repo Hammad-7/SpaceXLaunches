@@ -9,7 +9,7 @@ import NavBar from './components/NavBar';
 function App() {
 
   const client = new ApolloClient({
-    uri: 'https://spacex-production.up.railway.app/',
+    uri: '/graphql',
     cache: new InMemoryCache(),
   })
 
