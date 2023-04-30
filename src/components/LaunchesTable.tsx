@@ -211,10 +211,6 @@ if (error) return <p>Error :</p>;
   if (selectedRockets.length === 0 && selectedOutcomes.length === 0) {
     filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
     filteredData = filteredData?.filter((launch) => {
-      console.log("Inside!")
-      if(favouritePastLaunches){
-        console.log("true")
-      }
       return !favouriteFutureLaunches.some( field => field.id === launch.id)
        && !favouritePastLaunches.some( field => field.id === launch.id)
     });
