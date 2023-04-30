@@ -14,7 +14,7 @@ export const GET_LAUNCHES = gql`
         launch_success
       }
     }
-  `;
+`;
 
 //Get upcoming launches query
 export const GET_UPCOMING_LAUNCHES = gql`

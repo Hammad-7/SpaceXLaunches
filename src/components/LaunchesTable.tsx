@@ -48,7 +48,7 @@ const LaunchesTable = ({ query }: queryProp) => {
 
 
 
-  //----------------------- USEEFFECT HOOKS -------------------------------------------//
+//----------------------- USEEFFECT HOOKS -------------------------------------------//
   //setting favourite launch Ids on local storage
   useEffect(() => {
     localStorage.setItem('favouriteLaunchIds', JSON.stringify(favouriteLaunchIds));
@@ -63,10 +63,10 @@ const LaunchesTable = ({ query }: queryProp) => {
   useEffect(() => {
     localStorage.setItem('favouriteFutureLaunches', JSON.stringify(favouriteFutureLaunches));
   }, [favouriteFutureLaunches]);
-  //-----------------------USEEFFECT HOOKS END--------------------------------------------//
+//-----------------------USEEFFECT HOOKS END--------------------------------------------//
 
 
-  //---------------COLUMNS FOR THE ANTD TABLE ---------------------------------//
+//---------------COLUMNS FOR THE ANTD TABLE ---------------------------------//
   const columns = [
     {
       title: 'Mission Name',
@@ -151,14 +151,14 @@ const LaunchesTable = ({ query }: queryProp) => {
   //--------------------COLUMNS END------------------------------------------------//
 
 
-  //------------------FETCHING DATA FROM API-----------------------------------//
+//------------------FETCHING DATA FROM API-----------------------------------//
 
-  //call GET_UPCOMING_LAUNCHES query if future tab is seleced otherwise GET_LAUNCHES for past launches
-  const { loading, error, data } = useQuery<LaunchesData, LaunchesVars>(
-    query === 'future' ? GET_UPCOMING_LAUNCHES : GET_LAUNCHES
-  );
-  if (loading) return <p><Spin /></p>;
-  if (error) return <p>Error :</p>;
+//call GET_UPCOMING_LAUNCHES query if future tab is seleced otherwise GET_LAUNCHES for past launches
+const { loading, error, data } = useQuery<LaunchesData, LaunchesVars>(
+  query === 'future' ? GET_UPCOMING_LAUNCHES : GET_LAUNCHES
+);
+if (loading) return <p><Spin /></p>;
+if (error) return <p>Error :</p>;
 
 
   //---------------OPERATIONS ON DATA------------------------------------------//
@@ -216,13 +216,30 @@ const LaunchesTable = ({ query }: queryProp) => {
     );
   }
 
+  if(favouriteFutureLaunches || favouritePastLaunches){
+    filteredData = filteredData?.filter((launch) => {
+      return !favouriteFutureLaunches.includes(launch) && !favouritePastLaunches.includes(launch);
+    });
+  }
+
   //when filters are removed, set filteredData to original value again
-  else if (selectedRockets.length === 0 && selectedOutcomes.length === 0) {
+  if (selectedRockets.length === 0 && selectedOutcomes.length === 0) {
     filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
+    filteredData = filteredData?.filter((launch) => {
+      console.log("Inside!")
+      if(favouritePastLaunches){
+        console.log("true")
+      }
+      return !favouriteFutureLaunches.some( field => field.id === launch.id)
+       && !favouritePastLaunches.some( field => field.id === launch.id)
+    });
+
   }
 
 
-  //---Favourite Tables operations---
+
+
+  //---Favourite Tables operations----------------------//
 
   //setting favouriteLaunches for the favourites table - past and future
   function addFavouriteLaunch(launch: Launch) {
@@ -233,18 +250,16 @@ const LaunchesTable = ({ query }: queryProp) => {
     else {
       setfavouriteFutureLaunches([...favouriteFutureLaunches, launch])
     }
-    console.log("Added Favourite Launch")
   }
 
   //removing favouriteLaunches from the favourites table
   async function removeFavouriteLaunch(launch: Launch) {
     if (query === "past") {
-      console.log("PAST!!")
       setfavouritePastLaunches((prevIds) => prevIds.filter(id => id !== launch))
-      console.log(typeof (filteredData))
     }
     else if (query === "future")
       setfavouriteFutureLaunches((prevIds) => prevIds.filter(id => id !== launch))
+
   }
 
   let filteredFavouritesData = query === "future" ? favouriteFutureLaunches : favouritePastLaunches;
@@ -268,9 +283,11 @@ const LaunchesTable = ({ query }: queryProp) => {
     filteredFavouritesData = query === "future" ? favouriteFutureLaunches : favouritePastLaunches;
   }
 
+  //----Filtered Data Operations END --------------------------------//
 
-  //final filtered data for the main table
-  const dataSource = filteredData;
+
+  // //final filtered data for the main table
+  // const dataSource = filteredData;
 
   return (
     <>
@@ -300,7 +317,7 @@ const LaunchesTable = ({ query }: queryProp) => {
             />
           <Table
             pagination={{ pageSize: 20 }}
-            dataSource={dataSource}
+            dataSource={filteredData}
             columns={columns}
           />
         </Space>
