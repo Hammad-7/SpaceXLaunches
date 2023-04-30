@@ -26,6 +26,7 @@ function App() {
               <NavBar />
               <div className='heading-container'>
                 <h1 className='heading'>SpaceX launches</h1>
+                <p>Click on the mission's name to get more info about the launch.</p>
               </div>
               <Content className='container'>
                 <Launches />
