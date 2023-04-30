@@ -11,7 +11,10 @@ import { SortOrder } from 'antd/lib/table/interface';
 
 const LaunchesTable = ({ query }: queryProp) => {
 
+  //--------------------STATES-----------------------------------------//
+  //state for selecting launches and displaying more information about them
   const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
+  //state for setting favourite LaunchIds and retrieving it from local storage
   const [favouriteLaunchIds, setFavouriteLaunchIds] = useState<string[]>(() => {
     const savedIds = localStorage.getItem('favouriteLaunchIds');
     if (savedIds) {
@@ -19,14 +22,51 @@ const LaunchesTable = ({ query }: queryProp) => {
     }
     return [];
   });
-  const [selectedRockets, setSelectedRockets] = useState<string[]>([]);
-  const [selectedOutcomes, setSelectedOutcomes] = useState<Array<string | boolean>>([])
+  //state for setting favourite Past Launches and retrieving it from local storage
+  const [favouritePastLaunches, setfavouritePastLaunches] = useState<Array<Launch>>(() => {
+    const savedIds = localStorage.getItem('favouritePastLaunches');
+    if (savedIds) {
+      return JSON.parse(savedIds);
+    }
+    return [];
+  });
+  //state for setting favourite Future Launches and retrieving it from local storage
+  const [favouriteFutureLaunches, setfavouriteFutureLaunches] = useState<Array<Launch>>(() => {
+    const savedIds = localStorage.getItem('favouriteFutureLaunches');
+    if (savedIds) {
+      return JSON.parse(savedIds);
+    }
+    return [];
+  });
 
+
+  //state for filtering rockets based on the selected rocket
+  const [selectedRockets, setSelectedRockets] = useState<string[]>([]);
+  //state for filtering rockets based on outcomes
+  const [selectedOutcomes, setSelectedOutcomes] = useState<Array<string | boolean>>([])
+  //------------------------------STATES END-------------------------------------------------//
+
+
+
+  //----------------------- USEEFFECT HOOKS -------------------------------------------//
+  //setting favourite launch Ids on local storage
   useEffect(() => {
     localStorage.setItem('favouriteLaunchIds', JSON.stringify(favouriteLaunchIds));
   }, [favouriteLaunchIds]);
 
+  //setting favourite past launches on local storage
+  useEffect(() => {
+    localStorage.setItem('favouritePastLaunches', JSON.stringify(favouritePastLaunches));
+  }, [favouritePastLaunches]);
 
+  //setting favourite past launches on local storage
+  useEffect(() => {
+    localStorage.setItem('favouriteFutureLaunches', JSON.stringify(favouriteFutureLaunches));
+  }, [favouriteFutureLaunches]);
+  //-----------------------USEEFFECT HOOKS END--------------------------------------------//
+
+
+  //---------------COLUMNS FOR THE ANTD TABLE ---------------------------------//
   const columns = [
     {
       title: 'Mission Name',
@@ -77,14 +117,11 @@ const LaunchesTable = ({ query }: queryProp) => {
           onClick={() => {
             if (favouriteLaunchIds.includes(launch.id)) {
               console.log("Favourite!!")
-              // remove launch from favorites
               setFavouriteLaunchIds((prevIds) => prevIds.filter(id => id !== launch.id))
-              console.log(favouriteLaunchIds)
+              removeFavouriteLaunch(launch)
             } else {
-              console.log("Adding favourite!!")
-              // add launch to favorites
               setFavouriteLaunchIds([...favouriteLaunchIds, launch.id]);
-              console.log(favouriteLaunchIds)
+              addFavouriteLaunch(launch)
             }
           }}
         >
@@ -111,98 +148,161 @@ const LaunchesTable = ({ query }: queryProp) => {
       sortDirections: ['descend'] as SortOrder[],
     },
   ];
+  //--------------------COLUMNS END------------------------------------------------//
 
 
+  //------------------FETCHING DATA FROM API-----------------------------------//
+
+  //call GET_UPCOMING_LAUNCHES query if future tab is seleced otherwise GET_LAUNCHES for past launches
   const { loading, error, data } = useQuery<LaunchesData, LaunchesVars>(
     query === 'future' ? GET_UPCOMING_LAUNCHES : GET_LAUNCHES
   );
-
-
   if (loading) return <p><Spin /></p>;
   if (error) return <p>Error :</p>;
 
-  const rockets = query === "future" ? data?.launchesUpcoming.map((item) => item.rocket.rocket_name) : data?.launchesPast.map((item) => item.rocket.rocket_name)
-  const uniqueRockets = new Set<string>();
 
-  if (Array.isArray(rockets)) {
-    rockets.forEach((rocket) => {
-      if (typeof rocket === "string") {
-        uniqueRockets.add(rocket);
-      }
-    });
-  }
-  console.log(uniqueRockets)
+  //---------------OPERATIONS ON DATA------------------------------------------//
 
+
+  //----FOR FILTERING----------//
+  //finding all unique outcomes from the api response for filter dropdown
   const outcomes = query === "future" ? data?.launchesUpcoming.map((item) => item.launch_success) : data?.launchesPast.map((item) => item.launch_success)
   const uniqueOutcomes = new Set<null | boolean | string>();
   if (Array.isArray(outcomes)) {
     outcomes.forEach((outcome) => {
-      uniqueOutcomes.add(outcome === null? "NA":outcome===true ? "Yes":"No");
-      // if (typeof outcome === "boolean") {
-      //   uniqueOutcomes.add(outcome);
-      // }
+      uniqueOutcomes.add(outcome === null ? "NA" : outcome === true ? "Yes" : "No");
     });
   }
 
-  const onChange = (value: { [key: number]: string }) => {
-    const valuesArray = Object.values(value);
-    setSelectedRockets(valuesArray);
-  };
-
+  //set selectedOutcomes to the outcome selected from the filter
   const onOutcomeChange = (value: { [key: number]: string }) => {
     const valuesArray = Object.values(value);
     setSelectedOutcomes(valuesArray);
     console.log(selectedOutcomes.length)
   };
 
+  //finding all unique rockets name from the api response filter dropdown
+  const rockets = query === "future" ? data?.launchesUpcoming.map((item) => item.rocket) : data?.launchesPast.map((item) => item.rocket)
+  const uniqueRockets = new Set<string>();
+  if (Array.isArray(rockets)) {
+    rockets.forEach((rocket) => {
+      if (typeof rocket.rocket_name === "string") {
+        uniqueRockets.add(rocket.rocket_name);
+      }
+    });
+  }
 
-  //filtering data based on selected rockets
+  //set selected Rockets to the value of selected rockets from filter
+  const onChange = (value: { [key: number]: string }) => {
+    const valuesArray = Object.values(value);
+    setSelectedRockets(valuesArray);
+  };
+
+
+  //let filtered data to upcoming if future tab, otherwise set past
   let filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
 
+  //filtering by rockets
   if (selectedRockets.length > 0) {
     filteredData = filteredData?.filter((launch) =>
       selectedRockets.includes(launch.rocket.rocket_name)
     );
   }
 
-  if(selectedOutcomes.length > 0) {
+  //filtering by outcomes
+  if (selectedOutcomes.length > 0) {
     filteredData = filteredData?.filter((launch) =>
-      selectedOutcomes.includes(launch.launch_success === null ? "NA": launch.launch_success === true? "Yes":"No")
+      selectedOutcomes.includes(launch.launch_success === null ? "NA" : launch.launch_success === true ? "Yes" : "No")
     );
   }
-  else if(selectedRockets.length===0 && selectedOutcomes.length===0){
+
+  //when filters are removed, set filteredData to original value again
+  else if (selectedRockets.length === 0 && selectedOutcomes.length === 0) {
     filteredData = query === "future" ? data?.launchesUpcoming : data?.launchesPast;
   }
 
-  
+
+  //---Favourite Tables operations---
+
+  //setting favouriteLaunches for the favourites table - past and future
+  function addFavouriteLaunch(launch: Launch) {
+    console.log(query)
+    if (query === "past") {
+      setfavouritePastLaunches([...favouritePastLaunches, launch])
+    }
+    else {
+      setfavouriteFutureLaunches([...favouriteFutureLaunches, launch])
+    }
+    console.log("Added Favourite Launch")
+  }
+
+  //removing favouriteLaunches from the favourites table
+  async function removeFavouriteLaunch(launch: Launch) {
+    if (query === "past") {
+      console.log("PAST!!")
+      setfavouritePastLaunches((prevIds) => prevIds.filter(id => id !== launch))
+      console.log(typeof (filteredData))
+    }
+    else if (query === "future")
+      setfavouriteFutureLaunches((prevIds) => prevIds.filter(id => id !== launch))
+  }
+
+  let filteredFavouritesData = query === "future" ? favouriteFutureLaunches : favouritePastLaunches;
+
+  //filtering by rockets
+  if (selectedRockets.length > 0) {
+    filteredFavouritesData = filteredFavouritesData?.filter((launch) =>
+      selectedRockets.includes(launch.rocket.rocket_name)
+    );
+  }
+
+  //filtering by outcomes
+  if (selectedOutcomes.length > 0) {
+    filteredFavouritesData = filteredFavouritesData?.filter((launch) =>
+      selectedOutcomes.includes(launch.launch_success === null ? "NA" : launch.launch_success === true ? "Yes" : "No")
+    );
+  }
+
+  //when filters are removed, set filteredData to original value again
+  else if (selectedRockets.length === 0 && selectedOutcomes.length === 0) {
+    filteredFavouritesData = query === "future" ? favouriteFutureLaunches : favouritePastLaunches;
+  }
+
+
+  //final filtered data for the main table
   const dataSource = filteredData;
 
   return (
     <>
       <div style={{ maxWidth: '100%', overflowX: 'auto' }}>
         <Space direction='vertical'>
-        <h1>Filters</h1>
-        <Space>
-        <Select onChange={onChange} mode='multiple' style={{ minWidth: "200px" }} placeholder="Select Rocket Name" >
-          {[...uniqueRockets].map((rocket) => (
-            <Select.Option key={rocket} value={rocket}>
-              {rocket}
-            </Select.Option>
-          ))}
-        </Select>
-        <Select onChange={onOutcomeChange} mode='multiple' style={{ minWidth: "100px" }} placeholder="Select Outcome" >
-          {[...uniqueOutcomes].map((outcome) => (
-            <Select.Option value={outcome}>
-              {outcome}
-            </Select.Option>
-          ))}
-        </Select>
-        </Space>
-        <Table 
-        pagination={{ pageSize: 20 }} 
-        dataSource={dataSource} 
-        columns={columns}
-        />
+          <h1>Filters</h1>
+          <Space>
+            <Select onChange={onChange} mode='multiple' style={{ minWidth: "200px" }} placeholder="Select Rocket Name" >
+              {[...uniqueRockets].map((rocket) => (
+                <Select.Option key={rocket} value={rocket}>
+                  {rocket}
+                </Select.Option>
+              ))}
+            </Select>
+            <Select onChange={onOutcomeChange} mode='multiple' style={{ minWidth: "150px" }} placeholder="Select Outcome" >
+              {[...uniqueOutcomes].map((outcome) => (
+                <Select.Option value={outcome}>
+                  {outcome}
+                </Select.Option>
+              ))}
+            </Select>
+          </Space>
+          <h3>Favourite Launches</h3>
+          <Table
+              dataSource={filteredFavouritesData}
+              columns={columns}
+            />
+          <Table
+            pagination={{ pageSize: 20 }}
+            dataSource={dataSource}
+            columns={columns}
+          />
         </Space>
       </div>
 
