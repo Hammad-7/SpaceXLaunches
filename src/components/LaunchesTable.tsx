@@ -6,7 +6,6 @@ import './components.css'
 import LaunchDetails from './LaunchDetails';
 import { Launch, LaunchesData, LaunchesVars, queryProp } from '../utils/types';
 import { GET_LAUNCHES, GET_UPCOMING_LAUNCHES } from '../utils/queries';
-import { SortOrder } from 'antd/lib/table/interface';
 
 
 const LaunchesTable = ({ query }: queryProp) => {
@@ -39,7 +38,6 @@ const LaunchesTable = ({ query }: queryProp) => {
     return [];
   });
 
-
   //state for filtering rockets based on the selected rocket
   const [selectedRockets, setSelectedRockets] = useState<string[]>([]);
   //state for filtering rockets based on outcomes
@@ -49,7 +47,7 @@ const LaunchesTable = ({ query }: queryProp) => {
 
 
 //----------------------- USEEFFECT HOOKS -------------------------------------------//
-  //setting favourite launch Ids on local storage
+//setting favourite launch Ids on local storage
   useEffect(() => {
     localStorage.setItem('favouriteLaunchIds', JSON.stringify(favouriteLaunchIds));
   }, [favouriteLaunchIds]);
@@ -131,24 +129,11 @@ const LaunchesTable = ({ query }: queryProp) => {
             <StarOutlined style={{ color: "gold" }} />
           )}
         </Button>
-      ),
-      sorter: (a: Launch, b: Launch) => {
-        const aIsFavorite = favouriteLaunchIds.includes(a.id);
-        const bIsFavorite = favouriteLaunchIds.includes(b.id);
-        if (aIsFavorite && bIsFavorite) {
-          return 0;
-        } else if (aIsFavorite) {
-          return 1;
-        } else if (bIsFavorite) {
-          return -1;
-        } else {
-          return 0;
-        }
-      },
-      sortDirections: ['descend'] as SortOrder[],
+      )
     },
   ];
   //--------------------COLUMNS END------------------------------------------------//
+
 
 
 //------------------FETCHING DATA FROM API-----------------------------------//
@@ -161,7 +146,7 @@ if (loading) return <p><Spin /></p>;
 if (error) return <p>Error :</p>;
 
 
-  //---------------OPERATIONS ON DATA------------------------------------------//
+//---------------OPERATIONS ON DATA------------------------------------------//
 
 
   //----FOR FILTERING----------//
@@ -283,11 +268,14 @@ if (error) return <p>Error :</p>;
     filteredFavouritesData = query === "future" ? favouriteFutureLaunches : favouritePastLaunches;
   }
 
+
+  
+
   //----Filtered Data Operations END --------------------------------//
 
 
-  // //final filtered data for the main table
-  // const dataSource = filteredData;
+  //final filtered data for the main table
+  const dataSource = filteredFavouritesData.concat(filteredData ??[])
 
   return (
     <>
@@ -310,14 +298,9 @@ if (error) return <p>Error :</p>;
               ))}
             </Select>
           </Space>
-          <h3>Favourite Launches</h3>
-          <Table
-              dataSource={filteredFavouritesData}
-              columns={columns}
-            />
           <Table
             pagination={{ pageSize: 20 }}
-            dataSource={filteredData}
+            dataSource={dataSource}
             columns={columns}
           />
         </Space>
