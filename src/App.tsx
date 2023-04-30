@@ -1,6 +1,5 @@
 import 'antd/dist/reset.css';
 import './App.css';
-import { BrowserRouter as Router } from 'react-router-dom'
 import { ConfigProvider, Layout, theme} from 'antd';
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
 import Launches from './components/Launches';
@@ -17,7 +16,6 @@ function App() {
 
   return (
     <div className='App'>
-      <Router>
         <ApolloProvider client={client}>
           <ConfigProvider
             theme={{
@@ -35,7 +33,6 @@ function App() {
             </Layout>
           </ConfigProvider>
         </ApolloProvider>
-      </Router>
     </div>
   );
 }
